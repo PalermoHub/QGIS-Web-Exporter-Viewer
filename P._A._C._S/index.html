@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Generato con QGISWebExporter by @gbvitrano · 13/04/2026">
+<title>P.  A. C. S.</title>
+<link rel="stylesheet" href="css/leaflet.css">
+<script src="js/lib/leaflet.js"></script>
+<script src="js/lib/leaflet-hash.min.js"></script>
+<script src="js/lib/chart.umd.min.js"></script>
+<script src="js/lib/chartjs-plugin-datalabels.min.js"></script>
+<script>if (typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }</script>
+<script src="js/lib/marked.min.js"></script>
+<script src="js/lib/leaflet.pattern-src.js"></script>
+<script src="https://unpkg.com/rbush@3.0.1/rbush.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-coord-projection@latest/dist/leaflet-coord-projection.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-coord-projection@latest/dist/leaflet-coord-projection.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@kalisio/leaflet-graphicscale@latest/dist/Leaflet.GraphicScale.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@kalisio/leaflet-graphicscale@latest/dist/Leaflet.GraphicScale.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+
+
+<link rel="stylesheet" href="css/Control.MiniMap.min.css">
+<script src="js/lib/Control.MiniMap.min.js"></script>
+</head>
+<body class="sidebar-left">
+
+<div id="page-header" style="height:60px" title="palermohub.opendatasicilia.it"><a href="https://palermohub.opendatasicilia.it/" target="_blank" rel="noopener noreferrer" style="display:contents;line-height:0"><img class="header-logo" src="img/header-logo.png" alt="logo"></a><div class="header-text"><div class="header-title">Piano Attuativo Centro Storico</div><div class="header-subtitle">Test plugin QGIS Web Exporter Viewer</div></div></div>
+<div id="main-area">
+<div id="sidebar-wrap">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h1>P.  A. C. S.</h1>
+      <p>CRS: EPSG:4326 · 2 layer</p>
+    </div>
+
+    <div class="tab-btns">
+      <button class="tab-btn active" data-tab="layers"  onclick="showTab('layers')">Layer</button>
+      <button class="tab-btn"        data-tab="stats"   onclick="showTab('stats')">Statistiche &amp; DataViz</button>
+      <button class="tab-btn" data-tab="custom0" onclick="showTab('custom0')">Storia</button>
+      <button class="tab-btn" data-tab="custom1" onclick="showTab('custom1')">Documenti</button>
+      
+    </div>
+
+    <div id="pane-layers" class="tab-pane active">
+      <div id="layers-top">
+        <div class="section-title">Layer attivi</div>
+        <div id="layers-list"></div>
+        <div id="zoom-btns" style="margin-top:10px;display:flex;flex-direction:column;gap:4px;"></div>
+        <div id="ext-layers-section">
+          <div class="section-title" style="margin-top:10px;margin-bottom:4px">Layer aggiuntivi</div>
+          <div id="ext-layers-list"></div>
+          <button id="btn-add-ext-layer" onclick="openAddLayerModal()">&#xFF0B; Aggiungi livello&#8230;</button>
+        </div>
+      </div>
+      <div id="layers-resizer" title="Trascina per ridimensionare"></div>
+      <div id="layers-bottom">
+        <div class="section-title">Legenda</div>
+        <div id="legend-filter-banner" style="display:none"></div>
+        <div id="legend-content"></div>
+      </div>
+    </div>
+
+    <div id="pane-stats" class="tab-pane">
+      <div class="section-title">Riepilogo</div>
+      <table class="stats-tbl" id="stats-table"></table>
+
+      <div class="stats-sep"></div>
+      <div class="section-title chart-builder-hdr">
+        &#xFF0B; Aggiungi grafico
+        <span id="charts-count" class="charts-count-badge" style="display:none"></span>
+      </div>
+
+      <div id="chart-builder">
+        <select id="chart-layer-sel" onchange="onChartLayerChange()">
+          <option value="__all__">— Tutti i layer —</option>
+        </select>
+        <select id="chart-field-sel">
+          <option value="__count__">Conteggio feature</option>
+        </select>
+        <div id="chart-field2-row" style="display:none">
+          <label class="chart-field2-lbl">Linea (asse dx):</label>
+          <select id="chart-field-sel-2">
+            <option value="__count__">Conteggio feature</option>
+          </select>
+        </div>
+        <div id="chart-type-grid">
+          <button class="chart-type-btn active" data-type="bar"       onclick="selectChartType('bar')">&#9646; Bar</button>
+          <button class="chart-type-btn"        data-type="doughnut"  onclick="selectChartType('doughnut')">&#9711; Doughnut</button>
+          <button class="chart-type-btn"        data-type="pie"       onclick="selectChartType('pie')">&#9685; Pie</button>
+          <button class="chart-type-btn"        data-type="line"      onclick="selectChartType('line')">&#8725; Line</button>
+          <button class="chart-type-btn"        data-type="polarArea" onclick="selectChartType('polarArea')">&#9737; Polar</button>
+          <button class="chart-type-btn"        data-type="radar"     onclick="selectChartType('radar')">&#11039; Radar</button>
+          <button class="chart-type-btn"        data-type="combo"     onclick="selectChartType('combo')" style="grid-column:span 3">&#10070; Bar + Line</button>
+        </div>
+        <div id="chart-title-row">
+          <label for="chart-title-input">Titolo:</label>
+          <input id="chart-title-input" type="text" placeholder="generato automaticamente">
+        </div>
+        <div id="chart-actions">
+          <button id="btn-gen-chart" class="chart-action-btn" onclick="generateChart()">&#xFF0B; Aggiungi grafico</button>
+        </div>
+      </div>
+
+      <div id="charts-list"></div>
+    </div>
+
+    <div id="pane-custom0" class="tab-pane"></div>
+  <div id="pane-custom1" class="tab-pane"></div>
+  
+
+    <div id="sidebar-footer">
+      Generato con <strong>QGISWebExporter</strong> by <a href="https://www.linkedin.com/in/gbvitrano/" target="_blank" rel="noopener noreferrer" style="color:inherit;">@gbvitrano</a> &middot; 13/04/2026
+    </div>
+  </div>
+  <button id="sidebar-toggle" onclick="toggleSidebar()" title="Mostra/nascondi pannello">&#8249;</button>
+  <div id="sidebar-resizer" title="Trascina per ridimensionare"></div>
+</div>
+
+<div id="map">
+  <div id="info-bar">Clicca su una feature per i dettagli</div>
+
+  <!-- Pannello laterale dettagli feature -->
+  <div id="geo-side-panel">
+    <div id="gsp-header">
+      <div><div id="gsp-title">Dettagli feature</div><div id="gsp-layer"></div></div>
+      <button onclick="gspClose()" title="Chiudi">&#x2715;</button>
+    </div>
+    <div id="gsp-body"></div>
+  </div>
+
+  <!-- Pannello Analisi mappa -->
+  <div id="map-analysis-panel">
+    <div class="ma-header">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/><path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.078.706.186 1.068.295.369.112.74.224 1.096.295.365.074.66.104.922.004.888-.33 1.232-1.812 1.232-2.839A7 7 0 1 0 8 15"/></svg>
+      Analisi della mappa
+      <button class="ma-close-btn" onclick="closeMapAnalysis()" title="Chiudi">&times;</button>
+    </div>
+    <div class="ma-body">
+      <div class="ma-select-wrap">
+        <div class="ma-select-display" id="maSelectDisplay" onclick="toggleMapAnalysisDropdown()">
+          <span id="maSelectLabel">Seleziona attributo...</span>
+          <div class="ma-select-icons">
+            <span class="ma-clear-btn" id="maClearBtn" onclick="clearMapAnalysis(event)" title="Rimuovi">&times;</span>
+            <span class="ma-chevron" id="maChevron">&#8964;</span>
+          </div>
+        </div>
+        <div class="ma-dropdown" id="maDropdown">
+          <div class="ma-search-wrap">
+            <span class="ma-search-icon">&#128269;</span>
+            <input type="text" class="ma-search-input" id="maSearchInput" placeholder="Cerca attributo..." oninput="filterMapAnalysisOptions()">
+          </div>
+          <div class="ma-options-list" id="maOptionsList"></div>
+        </div>
+      </div>
+      <div class="ma-legend" id="maLegend" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="table-modal" class="collapsed">
+    <div id="table-modal-bar">
+      <select id="table-layer-sel" onchange="buildTable(this.value)"></select>
+      <input id="table-search" type="text" placeholder="🔍 Cerca nelle righe..." oninput="filterTable(this.value)">
+      <button class="tbl-col-btn" id="btn-col-sel" onclick="toggleColSelector()" title="Mostra/nascondi colonne">&#9776; Colonne</button>
+      <span id="tbl-sel-badge"></span>
+      <button class="tbl-dl-btn" onclick="downloadTableCSV()" title="Scarica come CSV (selezione attiva)">⬇ CSV</button>
+      <button class="tbl-dl-btn" onclick="downloadTableJSON()" title="Scarica come GeoJSON (selezione attiva)">⬇ JSON</button>
+      <button id="table-modal-close" onclick="toggleTableModal(false)" title="Chiudi tabella">&times;</button>
+    </div>
+    <div id="col-selector-bar"></div>
+    <div id="table-wrap"></div>
+  </div>
+  <div id="sv-mode-hint">&#128247;&#160;Clicca e trascina per impostare la direzione &#8212; ESC per annullare</div>
+</div>
+
+<!-- Pannello StreetView -->
+<div id="streetview-wrap">
+  <div id="streetview-resizer" title="Trascina per ridimensionare"></div>
+  <div id="streetview-panel">
+    <div id="streetview-header">
+      <div class="sv-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>
+        Street View
+        <span id="streetview-coords"></span>
+      </div>
+      <button id="streetview-close" onclick="closeStreetView()" title="Chiudi Street View">&#x2715;</button>
+    </div>
+    <iframe id="streetview-iframe" src="about:blank" allowfullscreen
+      allow="accelerometer; gyroscope; picture-in-picture"></iframe>
+    <div id="streetview-placeholder">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 16 16" fill="white"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>
+      <span>Clicca sulla mappa<br>per aprire Street View</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Modal Aggiungi Layer esterno -->
+<div id="add-layer-modal-overlay" onclick="if(event.target===this)closeAddLayerModal()">
+  <div id="add-layer-modal">
+    <div class="alm-header">
+      <span style="flex:1">Aggiungi livello</span>
+      <button style="background:none;border:none;color:inherit;cursor:pointer;font-size:20px;line-height:1;padding:0 2px" onclick="closeAddLayerModal()">&#215;</button>
+    </div>
+    <div class="alm-body">
+      <div class="alm-row">
+        <span class="alm-lbl">Tipologia</span>
+        <select id="alm-type" class="alm-input" onchange="onAlmTypeChange()">
+          <option value="">&#8212; Scegli un tipo &#8212;</option>
+          <option value="wms">WMS (URL)</option>
+          <option value="geojson_url">GeoJSON (URL remoto)</option>
+          <option value="geojson_file">File locale GeoJSON</option>
+        </select>
+      </div>
+      <div class="alm-row">
+        <span class="alm-lbl">Nome / Etichetta</span>
+        <input id="alm-label" class="alm-input" type="text" placeholder="es. Ortofoto 2024">
+      </div>
+      <div class="alm-row" id="alm-url-row">
+        <span class="alm-lbl">URL</span>
+        <input id="alm-url" class="alm-input" type="text" placeholder="https://...">
+      </div>
+      <div class="alm-row" id="alm-file-row" style="display:none">
+        <span class="alm-lbl">File</span>
+        <input id="alm-file" class="alm-input" type="file" accept=".geojson,.json" style="padding:3px">
+      </div>
+      <div id="alm-wms-rows" style="display:none">
+        <div class="alm-row" style="margin-top:0">
+          <span class="alm-lbl">Layer WMS</span>
+          <input id="alm-wms-layers" class="alm-input" type="text" placeholder="es. OSM-WMS">
+        </div>
+        <div class="alm-row">
+          <span class="alm-lbl">Formato</span>
+          <select id="alm-wms-format" class="alm-input">
+            <option value="image/png">image/png</option>
+            <option value="image/jpeg">image/jpeg</option>
+            <option value="image/png8">image/png8</option>
+          </select>
+        </div>
+      </div>
+      <div class="alm-row">
+        <span class="alm-lbl">Opacit&#224;</span>
+        <input id="alm-opacity" class="alm-input" type="range" min="0" max="1" step="0.05" value="1"
+          style="padding:0;border:none;background:none"
+          oninput="document.getElementById('alm-opacity-val').textContent=parseFloat(this.value).toFixed(2)">
+        <span id="alm-opacity-val" style="font-size:11px;width:28px;text-align:right;flex-shrink:0">1.00</span>
+      </div>
+      <div class="alm-row">
+        <span class="alm-lbl">Attribuzione</span>
+        <input id="alm-attr" class="alm-input" type="text" placeholder="es. &#169; OpenStreetMap">
+      </div>
+    </div>
+    <div class="alm-footer">
+      <button class="alm-btn alm-btn-cancel" onclick="closeAddLayerModal()">Chiudi</button>
+      <button class="alm-btn alm-btn-ok" onclick="doAddExtLayer()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+<div id="page-footer" style="height:40px">Piano Attuativo Centro Storico | Test plugin QGIS Web Exporter Viewer - @gbvitrano |  Work in progress... Disclaimer: I contenuti presenti in questa sezione, compresi testi ed elementi grafici, hanno carattere puramente informativo e divulgativo. 
+Non sono presenti dati personali o sensibili. Si precisa che questi materiali non costituiscono documenti ufficiali né hanno alcun valore legale.
+Per consultare la documentazione ufficiale e legalmente vincolante, si prega di fare riferimento agli atti definitivi allegati alle relative deliberazioni degli organi competenti.</div>
+
+<div id="share-modal">
+  <div class="share-modal-content">
+    <div class="share-modal-header">
+      <h3><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"/></svg> Condividi Vista</h3>
+      <button class="share-modal-close" onclick="document.getElementById('share-modal').classList.remove('visible')">&times;</button>
+    </div>
+    <div class="share-modal-body">
+      <p>Copia il link per condividere la vista corrente della mappa:</p>
+      <div class="share-url-row">
+        <input type="text" id="share-url-input" class="share-url-input" readonly>
+        <button class="share-copy-btn" onclick="gsShareCopyUrl()" title="Copia link">&#128203;</button>
+      </div>
+      <div id="share-copy-feedback" class="share-copy-feedback"></div>
+      <div class="share-social-btns">
+        <button class="share-social-btn whatsapp" onclick="gsShareVia('whatsapp')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg> WhatsApp</button>
+        <button class="share-social-btn telegram" onclick="gsShareVia('telegram')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.287 5.906c-.778.324-2.334.994-4.666 2.01-.378.15-.577.298-.595.442-.03.243.275.339.69.47l.175.055c.408.133.958.288 1.243.294.26.006.549-.1.868-.32 2.179-1.471 3.304-2.214 3.374-2.23.05-.012.12-.026.166.016.047.041.042.12.037.141-.03.129-1.227 1.241-1.846 1.817-.193.18-.33.307-.358.336a8.154 8.154 0 0 1-.188.186c-.38.366-.664.64.015 1.088.327.216.589.393.85.571.284.194.568.387.936.629.093.06.183.125.27.187.331.236.63.448.997.414.214-.02.435-.22.547-.82.265-1.417.786-4.486.906-5.751a1.426 1.426 0 0 0-.013-.315.337.337 0 0 0-.114-.217.526.526 0 0 0-.31-.093c-.3.005-.763.166-2.984 1.09z"/></svg> Telegram</button>
+        <button class="share-social-btn facebook" onclick="gsShareVia('facebook')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg> Facebook</button>
+        <button class="share-social-btn x-twitter" onclick="gsShareVia('twitter')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z"/></svg> X (Twitter)</button>
+        <button class="share-social-btn linkedin" onclick="gsShareVia('linkedin')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/></svg> LinkedIn</button>
+        <button class="share-social-btn bluesky" onclick="gsShareVia('bluesky')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 568 501" fill="currentColor"><path d="M123.121 33.664C188.241 82.553 258.281 181.68 284 234.873c25.719-53.192 95.759-152.32 160.879-201.209C491.866-1.611 568-28.906 568 57.947c0 17.346-9.945 145.713-15.778 166.555-20.275 72.453-94.155 90.933-159.875 79.748C507.222 323.8 536.444 388.56 473.333 453.32c-119.86 122.992-172.272-30.859-185.702-70.281-2.462-7.227-3.614-10.608-3.631-7.733-.017-2.875-1.169.506-3.631 7.733-13.43 39.422-65.842 193.273-185.702 70.281-63.111-64.76-33.889-129.52 80.454-149.07-65.72 11.185-139.6-7.295-159.875-79.748C9.945 203.66 0 75.293 0 57.947 0-28.906 76.134-1.611 123.121 33.664z"/></svg> Bluesky</button>
+        <button class="share-social-btn email" style="grid-column:span 2" onclick="gsShareVia('email')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/></svg> Email</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="js/data_meta.js"></script>
+<script src="js/layers/layer_Modalità_Intervento.js"></script>
+<script src="js/layers/layer_Tipologia_edilizia.js"></script>
+<script src="js/viewer.js"></script>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+<pattern id="qpat_0000" x="0" y="0" width="7.6" height="7.6" patternUnits="userSpaceOnUse" patternTransform="rotate(-45.0)"><line x1="0" y1="3.8" x2="7.6" y2="3.8" stroke="#000000" stroke-width="0.98" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0001" x="0" y="0" width="7.6" height="7.6" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><line x1="0" y1="3.8" x2="7.6" y2="3.8" stroke="#000000" stroke-width="0.98" stroke-linecap="square"/><line x1="3.8" y1="0" x2="3.8" y2="7.6" stroke="#000000" stroke-width="0.98" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0002" x="0" y="0" width="18.9" height="18.9" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><line x1="0" y1="9.45" x2="18.9" y2="9.45" stroke="#ffffff" stroke-width="0.98" stroke-linecap="square"/><line x1="9.45" y1="0" x2="9.45" y2="18.9" stroke="#ffffff" stroke-width="0.98" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0003" x="0" y="0" width="31.0" height="31.0" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><line x1="0" y1="15.5" x2="31.0" y2="15.5" stroke="#000000" stroke-width="0.98" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0004" x="0" y="0" width="18.9" height="18.9" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><line x1="0" y1="9.45" x2="18.9" y2="9.45" stroke="#232323" stroke-width="1.89" stroke-linecap="square"/><line x1="9.45" y1="0" x2="9.45" y2="18.9" stroke="#232323" stroke-width="1.89" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0005" x="0" y="0" width="8.0" height="8.0" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><circle cx="4.0" cy="4.0" r="2" fill="#000000"/></pattern>
+<pattern id="qpat_0006" x="0" y="0" width="18.9" height="18.9" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><line x1="0" y1="9.45" x2="18.9" y2="9.45" stroke="#232323" stroke-width="0.98" stroke-linecap="square"/><line x1="9.45" y1="0" x2="9.45" y2="18.9" stroke="#232323" stroke-width="0.98" stroke-linecap="square"/><circle cx="9.45" cy="9.45" r="1.5" fill="#000000"/></pattern>
+<pattern id="qpat_0007" x="0" y="0" width="7.6" height="7.6" patternUnits="userSpaceOnUse"><rect width="7.6" height="7.6" fill="#fb9a99" fill-opacity="1.000"/><line x1="0" y1="3.8" x2="7.6" y2="3.8" stroke="#e31a1c" stroke-width="0.98" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0008" x="0" y="0" width="7.6" height="7.6" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><rect width="7.6" height="7.6" fill="#bfffff" fill-opacity="1.000"/><line x1="0" y1="3.8" x2="7.6" y2="3.8" stroke="#000000" stroke-width="0.98" stroke-linecap="square"/></pattern>
+<pattern id="qpat_0009" x="0" y="0" width="8.0" height="8.0" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><rect width="8.0" height="8.0" fill="#dd65fb" fill-opacity="1.000"/><circle cx="4.0" cy="4.0" r="2" fill="#000000"/></pattern>
+<pattern id="qpat_0010" x="0" y="0" width="8.0" height="8.0" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><rect width="8.0" height="8.0" fill="#d0edae" fill-opacity="1.000"/><circle cx="4.0" cy="4.0" r="2" fill="#000000"/></pattern>
+<pattern id="qpat_0011" x="0" y="0" width="8.0" height="8.0" patternUnits="userSpaceOnUse" patternTransform="rotate(45.0)"><rect width="8.0" height="8.0" fill="#84c154" fill-opacity="1.000"/><circle cx="4.0" cy="4.0" r="2" fill="#000000"/></pattern>
+</defs>
+</svg>
+
+</body>
+</html>
